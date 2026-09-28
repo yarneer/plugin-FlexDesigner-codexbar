@@ -16,7 +16,8 @@ const { normaliseSnapshot } = require("./snapshot");
 const {
   statusFor,
   formatCountdown,
-  windowNameFromMinutes
+  windowNameFromMinutes,
+  redact
 } = require("./format");
 
 function createController(deps = {}) {
@@ -98,47 +99,13 @@ function createController(deps = {}) {
     if (!state) return;
     const view = state.snapshot
       ? // A failed refresh keeps the last snapshot on screen, flagged stale.
-        buildUsageView(id, state.snapshot, Boolean(state.error))
+        buildKeyView(id, state.snapshot, { stale: Boolean(state.error), now: now() })
       : {
           kind: "error",
           provider: id,
           reason: state.error || { kind: "unknown", message: "no data yet" }
         };
     for (const uid of state.keyUids) draw(uid, view);
-  }
-
-  /**
-   * Snapshot → usage KeyView. The big number is always the window CodexBar
-   * marks primary (for Kimi that is the 7-day window); the corner shows the
-   * reset countdown, falling back to the window name when the window has not
-   * started yet (no reset time).
-   */
-  function buildUsageView(id, snapshot, stale) {
-    const primary = snapshot.primary;
-    const mainWindowName =
-      snapshot.labels.primary || windowNameFromMinutes(primary.windowMinutes);
-    const cornerText = primary.resetsAt
-      ? formatCountdown(primary.resetsAt, now())
-      : mainWindowName;
-    const secondaryWindow = snapshot.secondary;
-    return {
-      kind: "usage",
-      provider: id,
-      mainRemaining: primary.remaining,
-      mainWindowName,
-      cornerText,
-      secondary: secondaryWindow
-        ? {
-            label:
-              snapshot.labels.secondary ||
-              windowNameFromMinutes(secondaryWindow.windowMinutes) ||
-              "2nd",
-            remaining: secondaryWindow.remaining
-          }
-        : null,
-      colorRole: primary.remaining === null ? null : statusFor(primary.remaining),
-      stale: Boolean(stale)
-    };
   }
 
   /**
@@ -177,11 +144,6 @@ function createController(deps = {}) {
     })();
 
     return state.inflight;
-  }
-
-  /** Belt-and-braces: nothing email-shaped crosses into a KeyView or log. */
-  function redact(text) {
-    return String(text || "").replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[redacted]");
   }
 
   /** SDK: key(s) appeared on a device. */
@@ -260,4 +222,39 @@ function createController(deps = {}) {
   return { onAlive, onKeyClick, onDead, onConfig };
 }
 
-module.exports = { createController };
+module.exports = { createController, buildKeyView };
+
+/**
+ * Snapshot → usage KeyView (pure). The big number is always the window
+ * CodexBar marks primary (for Kimi that is the 7-day window); the corner
+ * shows the reset countdown, falling back to the window name when the
+ * window has not started yet (no reset time). Exported so tooling (sample
+ * renders) produces exactly what the controller produces.
+ */
+function buildKeyView(provider, snapshot, { stale = false, now = Date.now() } = {}) {
+  const primary = snapshot.primary;
+  const mainWindowName =
+    snapshot.labels.primary || windowNameFromMinutes(primary.windowMinutes);
+  const cornerText = primary.resetsAt
+    ? formatCountdown(primary.resetsAt, now)
+    : mainWindowName;
+  const secondaryWindow = snapshot.secondary;
+  return {
+    kind: "usage",
+    provider,
+    mainRemaining: primary.remaining,
+    mainWindowName,
+    cornerText,
+    secondary: secondaryWindow
+      ? {
+          label:
+            snapshot.labels.secondary ||
+            windowNameFromMinutes(secondaryWindow.windowMinutes) ||
+            "2nd",
+          remaining: secondaryWindow.remaining
+        }
+      : null,
+    colorRole: primary.remaining === null ? null : statusFor(primary.remaining),
+    stale: Boolean(stale)
+  };
+}

@@ -13,10 +13,16 @@
 const { execFile } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
+const { redact } = require("./format");
 
 const SEARCH_PATHS = ["/opt/homebrew/bin", "/usr/local/bin"];
 const HARD_TIMEOUT_MS = 45_000;
 const WEB_TIMEOUT_SECONDS = 30;
+
+/** Card text for a provider that is not enabled in the CodexBar app. */
+function notEnabledMessage(provider) {
+  return `${provider} 未在 CodexBar 中启用`;
+}
 
 /** Reason kinds the rest of the plugin can branch on. */
 // "not-found"  — no codexbar binary at any known location
@@ -25,11 +31,6 @@ const WEB_TIMEOUT_SECONDS = 30;
 // "parse"       — stdout was not usable JSON
 // "provider"    — CodexBar itself reported an error for this provider
 const NOT_ENABLED_HINT = "No available fetch strategy";
-
-/** Strips anything email-shaped before a message reaches a KeyView or a log. */
-function redact(text) {
-  return String(text || "").replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[redacted]");
-}
 
 /**
  * Locates the codexbar executable: explicit override first, then Homebrew
@@ -111,33 +112,29 @@ function classify(provider, err, stdout) {
   }
 
   if (Array.isArray(parsed)) {
-    if (parsed.length === 0) {
-      // No entries at all: the provider is not reporting anything.
-      return {
-        status: "failed",
-        reason: { kind: "not-enabled", message: `${provider} 未在 CodexBar 中启用` }
-      };
+    // Only an entry for the requested provider counts. The CLI is known to
+    // degrade odd --provider values into "all enabled providers", so a
+    // well-formed array without our entry must NOT be adopted — that would
+    // silently show someone else's quota.
+    const entry = parsed.find((e) => e && e.provider === provider);
+    if (!entry) {
+      return { status: "failed", reason: { kind: "not-enabled", message: notEnabledMessage(provider) } };
     }
-    const entry = parsed.find((e) => e && e.provider === provider) || parsed[0];
-    if (entry && entry.error) {
+    if (entry.error) {
       const raw = redact(entry.error.message);
       if (raw.includes(NOT_ENABLED_HINT)) {
         return {
           status: "failed",
-          reason: { kind: "not-enabled", message: `${provider} 未在 CodexBar 中启用` }
+          reason: { kind: "not-enabled", message: notEnabledMessage(provider) }
         };
       }
       return { status: "failed", reason: { kind: "provider", message: raw } };
     }
-    if (entry && entry.usage) {
+    if (entry.usage) {
       return { status: "success", entry };
     }
-    // A well-formed array without our entry or any usage means the provider
-    // is not reporting anything — treat as not enabled.
-    return {
-      status: "failed",
-      reason: { kind: "not-enabled", message: `${provider} 未在 CodexBar 中启用` }
-    };
+    // An entry without usage or error is not reporting anything.
+    return { status: "failed", reason: { kind: "not-enabled", message: notEnabledMessage(provider) } };
   }
 
   if (timedOut) {

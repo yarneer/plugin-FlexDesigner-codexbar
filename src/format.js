@@ -32,4 +32,14 @@ function windowNameFromMinutes(minutes) {
   return `${Math.round(minutes)}m`;
 }
 
-module.exports = { statusFor, formatCountdown, windowNameFromMinutes };
+/**
+ * Strips account-identifying data (emails, account-id fields) before any
+ * CodexBar-sourced text reaches a KeyView or a log (spec #27).
+ */
+function redact(text) {
+  return String(text || "")
+    .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[redacted]")
+    .replace(/(account[_-]?id["']?\s*[:=]\s*["']?)[\w-]+/gi, "$1[redacted]");
+}
+
+module.exports = { statusFor, formatCountdown, windowNameFromMinutes, redact };

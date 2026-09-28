@@ -1,0 +1,40 @@
+[
+  {
+    "source": "web",
+    "provider": "cursor",
+    "usage": {
+      "identity": {
+        "providerID": "cursor",
+        "accountEmail": "user@example.com",
+        "accountID": "user_XXXXXXXXXXXXXXXXXXXX",
+        "loginMethod": "Cursor Pro"
+      },
+      "accountEmail": "user@example.com",
+      "loginMethod": "Cursor Pro",
+      "updatedAt": "2026-09-28T10:16:30Z",
+      "primary": {
+        "resetsAt": "2026-10-27T02:26:32Z",
+        "resetDescription": "Resets Oct 26 at 10:26PM",
+        "usedPercent": 6.3089947089947085,
+        "windowMinutes": 43200
+      },
+      "secondary": {
+        "resetsAt": "2026-10-27T02:26:32Z",
+        "resetDescription": "Resets Oct 26 at 10:26PM",
+        "usedPercent": 6.624444444444444,
+        "windowMinutes": 43200
+      },
+      "tertiary": {
+        "resetsAt": "2026-10-27T02:26:32Z",
+        "resetDescription": "Resets Oct 26 at 10:26PM",
+        "usedPercent": 0,
+        "windowMinutes": 43200
+      }
+    },
+    "rateWindowLabels": { "primary": "Total", "secondary": "Cursor", "tertiary": "Third Party" },
+    "pace": {
+      "primary": { "stage": "onPace", "willLastToReset": true, "deltaPercent": 0, "expectedUsedPercent": 6 },
+      "secondary": { "stage": "ahead", "willLastToReset": true, "deltaPercent": -2, "expectedUsedPercent": 4 }
+    }
+  }
+]

@@ -23,7 +23,7 @@ const controller = createController({
   draw: (keyUid, keyView) => {
     const rec = keyRegistry.get(keyUid);
     if (!rec) return;
-    const width = rec.key.style && rec.key.style.width;
+    const width = rec.key?.style?.width;
     const dataUrl = renderKeyView(keyView, { width });
     // plugin.draw rejects while the device is disconnected; an unhandled
     // rejection would take down every key, so swallow and log.

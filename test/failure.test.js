@@ -180,6 +180,26 @@ test("classify: empty array → not-enabled", () => {
   assert.equal(r.reason.kind, "not-enabled");
 });
 
+test("classify: array without the requested provider is not-enabled, never a foreign entry", () => {
+  // The CLI is known to degrade odd --provider values into all enabled
+  // providers; a claude entry must never satisfy a codex query.
+  const foreign = JSON.stringify([{ provider: "claude", usage: { primary: { usedPercent: 1 } } }]);
+  const r = classify("codex", null, foreign);
+  assert.equal(r.status, "failed");
+  assert.equal(r.reason.kind, "not-enabled");
+  assert.equal(r.reason.message, "codex 未在 CodexBar 中启用");
+});
+
+test("classify: redaction also strips account-id fields from messages", () => {
+  const out = JSON.stringify([
+    { provider: "codex", error: { kind: "provider", code: 1, message: "auth failed accountID: user_01ABC23DEF" } }
+  ]);
+  const r = classify("codex", { code: 1 }, out);
+  assert.equal(r.reason.kind, "provider");
+  assert.ok(!r.reason.message.includes("user_01ABC23DEF"));
+  assert.match(r.reason.message, /accountID: \[redacted\]/);
+});
+
 test("classify: unparseable output → parse", () => {
   const r = classify("codex", { code: 1 }, fixture("errors").garbage);
   assert.equal(r.reason.kind, "parse");

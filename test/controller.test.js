@@ -116,14 +116,31 @@ test("dead keys stop receiving draws and clicks", async () => {
 });
 
 test("account emails and ids never reach a KeyView or a log", async () => {
-  const h = createHarness(() => successFrom("codex")); // plants user@example.com
-  h.controller.onAlive({ keys: [key("k1")] });
+  // cursor.json is real captured output carrying accountEmail + accountID;
+  // codex.json plants a dummy accountEmail. Both must vanish.
+  const h = createHarness((provider) => successFrom(provider));
+  h.controller.onAlive({ keys: [key("k1"), key("k2", "cursor")] });
   await new Promise(setImmediate);
 
   const dump = JSON.stringify({ draws: h.draws, logs: h.logs });
   assert.ok(!ANY_EMAIL.test(dump), "email leaked into controller output");
   assert.ok(!dump.includes("accountEmail"));
   assert.ok(!dump.includes("accountID"));
+  assert.ok(!dump.includes("user_XXXX"));
+});
+
+test("cursor (real output): Total hero, Cursor meter, tertiary dropped", async () => {
+  const h = createHarness(() => successFrom("cursor"));
+  h.controller.onAlive({ keys: [key("k1", "cursor")] });
+  await new Promise(setImmediate);
+
+  const view = h.draws[0].view;
+  assert.equal(view.mainWindowName, "Total");
+  assert.equal(view.secondary.label, "Cursor");
+  assert.ok(Math.abs(view.secondary.remaining - 93.3755555555556) < 1e-9);
+  const dump = JSON.stringify(view);
+  assert.ok(!dump.includes("Third Party"), "tertiary window leaked");
+  assert.ok(!dump.includes("accountEmail"));
 });
 
 test("kimi keeps its 7-day primary window as the main number", async () => {

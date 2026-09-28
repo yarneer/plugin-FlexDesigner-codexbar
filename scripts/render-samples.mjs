@@ -10,34 +10,24 @@ import path from "node:path";
 const require = createRequire(import.meta.url);
 const { renderKeyView } = require("../src/render");
 const { normaliseSnapshot } = require("../src/snapshot");
-const { statusFor } = require("../src/format");
+const { buildKeyView } = require("../src/controller");
 
 const NOW = Date.parse("2026-09-28T11:27:00Z");
 
-function usageView(provider, fixtureEntry) {
-  const s = normaliseSnapshot(fixtureEntry);
-  return {
-    kind: "usage",
-    provider,
-    mainRemaining: s.primary.remaining,
-    mainWindowName: s.labels.primary || "",
-    cornerText: "2h13m",
-    secondary: s.secondary
-      ? { label: s.labels.secondary || "2nd", remaining: s.secondary.remaining }
-      : null,
-    colorRole: s.primary.remaining === null ? null : statusFor(s.primary.remaining),
-    stale: false
-  };
+function usageView(provider, fixtureEntry, stale = false) {
+  return buildKeyView(provider, normaliseSnapshot(fixtureEntry), { stale, now: () => NOW });
 }
 
 const views = {
   "sample-codex.png": usageView("codex", require("../test/fixtures/codex.json")[0]),
   "sample-claude.png": usageView("claude", require("../test/fixtures/claude.json")[0]),
   "sample-kimi.png": usageView("kimi", require("../test/fixtures/kimi.json")[0]),
-  "sample-claude-stale.png": {
-    ...usageView("claude", require("../test/fixtures/claude-unused.json")[0]),
-    stale: true
-  },
+  "sample-cursor.png": usageView("cursor", require("../test/fixtures/cursor.json")[0]),
+  "sample-claude-stale.png": usageView(
+    "claude",
+    require("../test/fixtures/claude-unused.json")[0],
+    true
+  ),
   "sample-error.png": {
     kind: "error",
     provider: "openai",
