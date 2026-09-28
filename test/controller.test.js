@@ -143,15 +143,15 @@ test("cursor (real output): Total hero, Cursor meter, tertiary dropped", async (
   assert.ok(!dump.includes("accountEmail"));
 });
 
-test("kimi keeps its 7-day primary window as the main number", async () => {
+test("kimi hero is the 5-hour window even though CodexBar marks the 7-day primary", async () => {
   const h = createHarness(() => successFrom("kimi"));
   h.controller.onAlive({ keys: [key("k1", "kimi")] });
   await new Promise(setImmediate);
 
-  // fixture: kimi primary usedPercent 10.2924 on windowMinutes 10080 (7d)
+  // fixture: kimi secondary = 5h usedPercent 31.6637 → hero remaining 68.3363
   const view = h.draws[0].view;
   assert.equal(view.kind, "usage");
-  assert.ok(Math.abs(view.mainRemaining - 89.7076) < 1e-9);
+  assert.ok(Math.abs(view.mainRemaining - 68.3363) < 1e-9);
 });
 
 test("missing usedPercent renders a null main value, not a fake number", async () => {

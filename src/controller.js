@@ -225,36 +225,64 @@ function createController(deps = {}) {
 module.exports = { createController, buildKeyView };
 
 /**
- * Snapshot → usage KeyView (pure). The big number is always the window
- * CodexBar marks primary (for Kimi that is the 7-day window); the corner
- * shows the reset countdown, falling back to the window name when the
- * window has not started yet (no reset time). Exported so tooling (sample
- * renders) produces exactly what the controller produces.
+ * Snapshot → usage KeyView (pure). Display rule (ADR 0002): when the two
+ * windows include a sub-daily one, that window is the hero and the other is
+ * the meter — so claude/codex/GLM/kimi all show "5-hour hero + weekly meter"
+ * consistently, even where CodexBar marks the weekly window primary (Kimi).
+ * Otherwise the hero is CodexBar's primary window. The corner shows the hero
+ * window's reset countdown, falling back to its name when it has not started.
+ * Exported so tooling (sample renders) produces exactly what the controller
+ * produces.
  */
 function buildKeyView(provider, snapshot, { stale = false, now = Date.now() } = {}) {
-  const primary = snapshot.primary;
-  const mainWindowName =
-    snapshot.labels.primary || windowNameFromMinutes(primary.windowMinutes);
-  const cornerText = primary.resetsAt
-    ? formatCountdown(primary.resetsAt, now)
-    : mainWindowName;
-  const secondaryWindow = snapshot.secondary;
+  const windows = pickWindows(snapshot);
+  const hero = windows.hero;
+  const mainWindowName = windows.heroLabel || windowNameFromMinutes(hero.windowMinutes);
+  const cornerText = hero.resetsAt ? formatCountdown(hero.resetsAt, now) : mainWindowName;
   return {
     kind: "usage",
     provider,
-    mainRemaining: primary.remaining,
+    mainRemaining: hero.remaining,
     mainWindowName,
     cornerText,
-    secondary: secondaryWindow
+    secondary: windows.meter
       ? {
           label:
-            snapshot.labels.secondary ||
-            windowNameFromMinutes(secondaryWindow.windowMinutes) ||
+            windows.meterLabel ||
+            windowNameFromMinutes(windows.meter.windowMinutes) ||
             "2nd",
-          remaining: secondaryWindow.remaining
+          remaining: windows.meter.remaining
         }
       : null,
-    colorRole: primary.remaining === null ? null : statusFor(primary.remaining),
+    colorRole: hero.remaining === null ? null : statusFor(hero.remaining),
     stale: Boolean(stale)
+  };
+}
+
+/**
+ * Chooses which window is the hero. A sub-daily (< 1440 min) CodexBar
+ * secondary beats its primary (Kimi: 5h hero over the 7d primary); any other
+ * shape keeps CodexBar's primary as the hero.
+ */
+function pickWindows(snapshot) {
+  const primary = snapshot.primary;
+  const secondary = snapshot.secondary;
+  if (primary && secondary) {
+    const pd = primary.windowMinutes;
+    const sd = secondary.windowMinutes;
+    if (Number.isFinite(pd) && Number.isFinite(sd) && sd < 1440 && sd < pd) {
+      return {
+        hero: secondary,
+        heroLabel: snapshot.labels.secondary,
+        meter: primary,
+        meterLabel: snapshot.labels.primary
+      };
+    }
+  }
+  return {
+    hero: primary,
+    heroLabel: snapshot.labels.primary,
+    meter: secondary || null,
+    meterLabel: snapshot.labels.secondary
   };
 }

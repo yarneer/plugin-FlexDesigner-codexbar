@@ -5,8 +5,9 @@
  * The key is a 60px-tall strip: a hero number plus a thin meter, not a chart.
  * Status colour never carries meaning alone — the digits are always drawn.
  */
-const { createCanvas } = require("@napi-rs/canvas");
+const { createCanvas, Path2D } = require("@napi-rs/canvas");
 const { statusFor } = require("./format");
+const { logoFor } = require("./logos");
 
 const KEY_HEIGHT = 60;
 const DEFAULT_WIDTH = 240;
@@ -62,6 +63,28 @@ function meter(ctx, x, y, w, h, remainingPercent, color) {
 }
 
 /**
+ * Draws the provider's brand logo (12px) at the top-left and returns the x
+ * where the label text should start. Providers without a logo get text only.
+ */
+function drawLogo(ctx, provider, x, y) {
+  const logo = logoFor(provider);
+  if (!logo) return x;
+  const size = 12;
+  try {
+    const p = new Path2D(logo.path);
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(size / 24, size / 24);
+    ctx.fillStyle = logo.hex;
+    ctx.fill(p);
+    ctx.restore();
+  } catch {
+    return x; // malformed path — degrade to text-only header
+  }
+  return x + size + 4;
+}
+
+/**
  * @param {{kind:"usage", provider:string, mainRemaining:number|null,
  *          mainWindowName:string, cornerText:string,
  *          secondary:{label:string, remaining:number|null}|null,
@@ -78,12 +101,13 @@ function renderUsage(view, opts) {
   const { canvas, ctx } = newCanvas(width);
   const pad = 8;
 
-  // Header: provider label (left), reset countdown or window name (right).
+  // Header: logo + provider label (left), reset countdown or window name (right).
   ctx.font = "600 10px sans-serif";
   ctx.fillStyle = INK.muted;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.fillText(String(view.provider).toUpperCase(), pad, pad);
+  const labelX = drawLogo(ctx, view.provider, pad, pad - 1);
+  ctx.fillText(String(view.provider).toUpperCase(), labelX, pad);
 
   if (view.cornerText) {
     ctx.textAlign = "right";
@@ -164,7 +188,8 @@ function renderError(view, opts) {
   ctx.fillStyle = INK.muted;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.fillText(String(view.provider).toUpperCase(), pad, pad);
+  const errLabelX = drawLogo(ctx, view.provider, pad, pad - 1);
+  ctx.fillText(String(view.provider).toUpperCase(), errLabelX, pad);
 
   ctx.font = "700 13px sans-serif";
   ctx.fillStyle = STATUS.critical;

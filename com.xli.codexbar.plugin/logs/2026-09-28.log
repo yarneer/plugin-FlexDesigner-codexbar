@@ -24,3 +24,79 @@
 2026-09-28 07:46:06.309 [warn][plugin] -> Connection closed
 2026-09-28 07:46:06.310 [info][plugin] -> Retrying connection in 5 seconds...
 2026-09-28 07:46:11.311 [info][plugin] -> Starting plugin transport with port undefined, uid undefined
+2026-09-28 07:46:53.536 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 07:46:53.537 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 07:46:53.544 [info] -> CodexBar Usage plugin started
+2026-09-28 07:46:53.547 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 07:46:54.777 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 07:46:54.778 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 07:46:54.783 [info] -> CodexBar Usage plugin started
+2026-09-28 07:46:54.785 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 07:49:45.834 [warn] -> [kimi] draw failed: Request failed: Received drawing task to device 0C1400BA2010 but device not connected., Command: [object Object]
+2026-09-28 07:49:53.144 [warn] -> [codex] draw failed: Request failed: Plugin key is not alive, Command: [object Object]
+2026-09-28 07:49:56.113 [warn] -> [claude] draw failed: Request failed: Plugin key is not alive, Command: [object Object]
+2026-09-28 08:05:30.447 [warn][plugin] -> Connection closed
+2026-09-28 08:05:30.449 [info][plugin] -> Retrying connection in 5 seconds...
+2026-09-28 08:05:35.214 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:05:35.217 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:05:35.238 [info] -> CodexBar Usage plugin started
+2026-09-28 08:05:35.253 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:05:35.450 [info][plugin] -> Starting plugin transport with port undefined, uid undefined
+2026-09-28 08:05:37.339 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:05:37.343 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:05:37.367 [info] -> CodexBar Usage plugin started
+2026-09-28 08:05:37.379 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:05:40.170 [warn][plugin] -> Connection closed
+2026-09-28 08:05:40.171 [info][plugin] -> Retrying connection in 5 seconds...
+2026-09-28 08:05:42.860 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:05:42.870 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:05:42.931 [info] -> CodexBar Usage plugin started
+2026-09-28 08:05:43.023 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:05:45.200 [info][plugin] -> Starting plugin transport with port undefined, uid undefined
+2026-09-28 08:05:49.103 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:05:49.109 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:05:49.139 [info] -> CodexBar Usage plugin started
+2026-09-28 08:05:49.201 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:05:49.877 [warn][plugin] -> Connection closed
+2026-09-28 08:05:49.878 [info][plugin] -> Retrying connection in 5 seconds...
+2026-09-28 08:05:51.913 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:05:51.915 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:05:51.947 [info] -> CodexBar Usage plugin started
+2026-09-28 08:05:51.956 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:05:54.884 [info][plugin] -> Starting plugin transport with port undefined, uid undefined
+2026-09-28 08:05:55.250 [warn][plugin] -> Connection closed
+2026-09-28 08:05:55.250 [info][plugin] -> Retrying connection in 5 seconds...
+2026-09-28 08:05:56.499 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:05:56.502 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:05:56.522 [info] -> CodexBar Usage plugin started
+2026-09-28 08:05:56.536 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:06:00.252 [info][plugin] -> Starting plugin transport with port undefined, uid undefined
+2026-09-28 08:06:02.170 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:06:02.186 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:06:02.220 [info] -> CodexBar Usage plugin started
+2026-09-28 08:06:02.235 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:06:03.926 [warn][plugin] -> Connection closed
+2026-09-28 08:06:03.926 [info][plugin] -> Retrying connection in 5 seconds...
+2026-09-28 08:06:04.658 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:06:04.662 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:06:04.673 [info] -> CodexBar Usage plugin started
+2026-09-28 08:06:04.682 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:06:08.932 [info][plugin] -> Starting plugin transport with port undefined, uid undefined
+2026-09-28 08:06:10.468 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:06:10.471 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:06:10.482 [info] -> CodexBar Usage plugin started
+2026-09-28 08:06:10.487 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:06:22.013 [warn][plugin] -> Connection closed
+2026-09-28 08:06:22.014 [info][plugin] -> Retrying connection in 5 seconds...
+2026-09-28 08:06:22.459 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:06:22.460 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:06:22.466 [info] -> CodexBar Usage plugin started
+2026-09-28 08:06:22.468 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:06:27.016 [info][plugin] -> Starting plugin transport with port undefined, uid undefined
+2026-09-28 08:06:28.310 [info][plugin] -> Starting plugin client with dir /Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin
+2026-09-28 08:06:28.311 [info][plugin] -> Starting plugin transport with port 54289, uid com.xli.codexbar
+2026-09-28 08:06:28.317 [info] -> CodexBar Usage plugin started
+2026-09-28 08:06:28.320 [info][plugin] -> Connected to server at ws://localhost:54289, Sending init command
+2026-09-28 08:13:21.129 [warn][plugin] -> Connection closed
+2026-09-28 08:13:21.130 [info][plugin] -> Retrying connection in 5 seconds...
+2026-09-28 08:13:26.131 [info][plugin] -> Starting plugin transport with port undefined, uid undefined

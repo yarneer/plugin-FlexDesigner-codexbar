@@ -62,16 +62,36 @@ test("window not started (no resetsAt, Claude at 0%) shows the window name in th
   assert.equal(view.cornerText, "Session");
 });
 
-test("kimi: big number is the labelled 7-day primary; meter is the 5-hour window", async () => {
+test("kimi: hero is the 5-hour window, meter is the 7-day weekly window (ADR 0002)", async () => {
   const h = createHarness(() => successFrom("kimi"), { now: () => NOW });
   h.controller.onAlive({ keys: [key("k1", "kimi")] });
   await new Promise(setImmediate);
 
   const view = h.draws[0].view;
-  assert.equal(view.mainWindowName, "7-day usage");
-  assert.equal(view.secondary.label, "5-hour usage");
-  assert.ok(Math.abs(view.mainRemaining - 89.7076) < 1e-9);
-  assert.ok(Math.abs(view.secondary.remaining - 68.3363) < 1e-9);
+  assert.equal(view.mainWindowName, "5-hour usage");
+  assert.ok(Math.abs(view.mainRemaining - 68.3363) < 1e-9);
+  assert.deepEqual(view.secondary, { label: "7-day usage", remaining: 89.7076 });
+});
+
+test("hero swap only fires for a sub-daily secondary: zai keeps CodexBar primary", async () => {
+  const h = createHarness(() => successFrom("zai"), { now: () => NOW });
+  h.controller.onAlive({ keys: [key("k1", "zai")] });
+  await new Promise(setImmediate);
+
+  // zai: primary = 5-hour (300min), secondary = Weekly (10080min) — no swap.
+  const view = h.draws[0].view;
+  assert.equal(view.mainWindowName, "5-hour");
+  assert.equal(view.secondary.label, "Weekly");
+});
+
+test("cursor (equal 30d windows) keeps CodexBar primary as hero", async () => {
+  const h = createHarness(() => successFrom("cursor"), { now: () => NOW });
+  h.controller.onAlive({ keys: [key("k1", "cursor")] });
+  await new Promise(setImmediate);
+
+  const view = h.draws[0].view;
+  assert.equal(view.mainWindowName, "Total");
+  assert.equal(view.secondary.label, "Cursor");
 });
 
 test("missing rateWindowLabels fall back to windowMinutes-derived names", async () => {

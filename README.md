@@ -6,9 +6,10 @@
 
 插件只有一种按键 **Usage Key**：在按键设置里选一个 Provider（codex / claude / cursor / gemini / copilot / zai / kimi 排在前面，其余 CodexBar 支持的 id 均可选），按键持续显示：
 
-- 大号数字：Primary Window 的剩余百分比（颜色四档：>50 绿、>20 黄、>5 橙、其余红；数字永远显示）
-- 右上角：主窗口重置倒计时（`2h13m` / `3d4h` / `45m`）；窗口未开始时显示窗口名
-- 进度条：Secondary Window 的剩余量（标签取 CodexBar 的 `rateWindowLabels`）
+- 品牌 logo：codex / claude / gemini / copilot / cursor / zai / kimi / qwen / deepseek 显示各自 logo（无 logo 的 Provider 回退文字标签）
+- 大号数字：主显窗口的剩余百分比（颜色四档：>50 绿、>20 黄、>5 橙、其余红；数字永远显示）。claude / codex / GLM / kimi 统一为 **5 小时窗口主显**；其他 Provider 以 CodexBar 的 primary 窗口主显（ADR 0002）
+- 右上角：主显窗口重置倒计时（`2h13m` / `3d4h` / `45m`）；窗口未开始时显示窗口名
+- 进度条：另一窗口的剩余量（标签取 CodexBar 的 `rateWindowLabels`）
 - 刷新失败时保留上一份数字并标 `·stale`；从未成功则显示错误卡说明原因
 - 点击按键立即刷新
 
