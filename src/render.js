@@ -63,13 +63,13 @@ function meter(ctx, x, y, w, h, remainingPercent, color) {
 }
 
 /**
- * Draws the provider's brand logo (12px) at the top-left and returns the x
- * where the label text should start. Providers without a logo get text only.
+ * Draws the provider's brand logo at (x, y), size×size, and returns the x
+ * where the content to its right should start (x + size + gap). Providers
+ * without a logo get text only.
  */
-function drawLogo(ctx, provider, x, y) {
+function drawLogo(ctx, provider, x, y, size = 12, gap = 4) {
   const logo = logoFor(provider);
   if (!logo) return x;
-  const size = 12;
   try {
     const p = new Path2D(logo.path);
     ctx.save();
@@ -79,9 +79,9 @@ function drawLogo(ctx, provider, x, y) {
     ctx.fill(p);
     ctx.restore();
   } catch {
-    return x; // malformed path — degrade to text-only header
+    return x; // malformed path — degrade to text-only layout
   }
-  return x + size + 4;
+  return x + size + gap;
 }
 
 /**
@@ -95,7 +95,8 @@ function renderKeyView(view, opts = {}) {
 }
 
 /**
- * Two-bar layout: header (logo + provider + reset countdown), then one bar
+ * Big-logo layout: the brand logo sits large on the left (vertically
+ * centred); to its right a header (provider + reset countdown) and one bar
  * row per window stacked below — e.g. 5-hour on top, weekly beneath. Each row
  * shows its own digits next to its bar, so colour never carries meaning alone.
  */
@@ -104,13 +105,24 @@ function renderUsage(view, opts) {
   const { canvas, ctx } = newCanvas(width);
   const pad = 8;
 
-  // Header: logo + provider label (left), reset countdown or window name (right).
+  // Big logo on the left, vertically centred.
+  const logoSize = width >= 200 ? 40 : 30;
+  const contentX = drawLogo(
+    ctx,
+    view.provider,
+    pad,
+    (KEY_HEIGHT - logoSize) / 2,
+    logoSize,
+    logoSize >= 40 ? 10 : 8
+  );
+
+  // Header over the bar block: provider label (left), countdown or window
+  // name (right).
   ctx.font = "600 10px sans-serif";
   ctx.fillStyle = INK.muted;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  const labelX = drawLogo(ctx, view.provider, pad, pad - 1);
-  ctx.fillText(String(view.provider).toUpperCase(), labelX, pad);
+  ctx.fillText(String(view.provider).toUpperCase(), contentX, pad);
 
   if (view.cornerText) {
     ctx.textAlign = "right";
@@ -131,7 +143,7 @@ function renderUsage(view, opts) {
   const rows = (view.rows || []).slice(0, 2);
   const rowH = 17;
   const firstY = rows.length === 2 ? 24 : 30;
-  const barX = 36;
+  const barX = contentX + 26;
   const pctRight = width - pad;
   const barRight = pctRight - 44;
 
@@ -143,7 +155,7 @@ function renderUsage(view, opts) {
     ctx.font = "400 9px sans-serif";
     ctx.fillStyle = INK.muted;
     ctx.textAlign = "left";
-    ctx.fillText(row.label, pad, top + 8);
+    ctx.fillText(row.label, contentX, top + 8);
 
     meter(ctx, barX, top + 3, barRight - barX, 6, row.remaining || 0, color);
 
@@ -166,24 +178,34 @@ function renderError(view, opts) {
   const { canvas, ctx } = newCanvas(width);
   const pad = 8;
 
+  const logoSize = width >= 200 ? 40 : 30;
+  const contentX = drawLogo(
+    ctx,
+    view.provider,
+    pad,
+    (KEY_HEIGHT - logoSize) / 2,
+    logoSize,
+    logoSize >= 40 ? 10 : 8
+  );
+  const textWidth = width - contentX - pad;
+
   ctx.font = "600 10px sans-serif";
   ctx.fillStyle = INK.muted;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  const errLabelX = drawLogo(ctx, view.provider, pad, pad - 1);
-  ctx.fillText(String(view.provider).toUpperCase(), errLabelX, pad);
+  ctx.fillText(String(view.provider).toUpperCase(), contentX, pad);
 
   ctx.font = "700 13px sans-serif";
   ctx.fillStyle = STATUS.critical;
-  ctx.fillText("— unavailable", pad, 22);
+  ctx.fillText("— unavailable", contentX, 24);
 
   ctx.font = "400 9px sans-serif";
   ctx.fillStyle = INK.secondary;
   let text = (view.reason && view.reason.message) || "unknown error";
-  while (ctx.measureText(text).width > width - pad * 2 && text.length > 4) {
+  while (ctx.measureText(text).width > textWidth && text.length > 4) {
     text = text.slice(0, -2);
   }
-  ctx.fillText(text, pad, 42);
+  ctx.fillText(text, contentX, 44);
 
   return canvas.toDataURL("image/png");
 }
