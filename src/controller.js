@@ -8,16 +8,23 @@
  * CodexBar or a canvas.
  *
  * KeyView contract (controller → renderer):
- *   usage: {kind:"usage", provider, mainRemaining}
+ *   usage: {kind:"usage", provider, mainRemaining, mainWindowName, cornerText,
+ *           secondary:{label, remaining}|null, colorRole, stale}
  *   error: {kind:"error", provider, reason:{kind, message}}
  */
 const { normaliseSnapshot } = require("./snapshot");
+const {
+  statusFor,
+  formatCountdown,
+  windowNameFromMinutes
+} = require("./format");
 
 function createController(deps = {}) {
   const {
     runCli,
     draw,
-    log = { info() {}, warn() {} }
+    log = { info() {}, warn() {} },
+    now = () => Date.now()
   } = deps;
 
   if (typeof runCli !== "function" || typeof draw !== "function") {
@@ -48,17 +55,47 @@ function createController(deps = {}) {
     const state = providers.get(id);
     if (!state) return;
     const view = state.snapshot
-      ? {
-          kind: "usage",
-          provider: id,
-          mainRemaining: state.snapshot.primary.remaining
-        }
+      ? buildUsageView(id, state.snapshot)
       : {
           kind: "error",
           provider: id,
           reason: state.error || { kind: "unknown", message: "no data yet" }
         };
     for (const uid of state.keyUids) draw(uid, view);
+  }
+
+  /**
+   * Snapshot → usage KeyView. The big number is always the window CodexBar
+   * marks primary (for Kimi that is the 7-day window); the corner shows the
+   * reset countdown, falling back to the window name when the window has not
+   * started yet (no reset time).
+   */
+  function buildUsageView(id, snapshot) {
+    const primary = snapshot.primary;
+    const mainWindowName =
+      snapshot.labels.primary || windowNameFromMinutes(primary.windowMinutes);
+    const cornerText = primary.resetsAt
+      ? formatCountdown(primary.resetsAt, now())
+      : mainWindowName;
+    const secondaryWindow = snapshot.secondary;
+    return {
+      kind: "usage",
+      provider: id,
+      mainRemaining: primary.remaining,
+      mainWindowName,
+      cornerText,
+      secondary: secondaryWindow
+        ? {
+            label:
+              snapshot.labels.secondary ||
+              windowNameFromMinutes(secondaryWindow.windowMinutes) ||
+              "2nd",
+            remaining: secondaryWindow.remaining
+          }
+        : null,
+      colorRole: primary.remaining === null ? null : statusFor(primary.remaining),
+      stale: false
+    };
   }
 
   /**

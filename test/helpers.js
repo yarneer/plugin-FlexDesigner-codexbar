@@ -14,8 +14,9 @@ function key(uid, provider = "codex") {
 /**
  * @param {(provider: string) => object|Promise<object>} responder returns a
  *        runCodexBar-style result for each call
+ * @param {{now?: () => number, scheduler?: object}} [deps] extra controller deps
  */
-function createHarness(responder) {
+function createHarness(responder, deps = {}) {
   const calls = [];
   const draws = [];
   const logs = [];
@@ -28,9 +29,47 @@ function createHarness(responder) {
     log: {
       info: (msg) => logs.push(`INFO ${msg}`),
       warn: (msg) => logs.push(`WARN ${msg}`)
-    }
+    },
+    ...deps
   });
   return { controller, calls, draws, logs };
+}
+
+/** Deterministic fake clock + timer queue: advance(ms) runs due callbacks. */
+function fakeClock(startMs = 0) {
+  let now = startMs;
+  let nextId = 1;
+  const timers = new Map();
+  return {
+    now: () => now,
+    scheduler: {
+      setTimeout(fn, ms) {
+        const id = nextId++;
+        timers.set(id, { at: now + ms, fn });
+        return id;
+      },
+      clearTimeout(id) {
+        timers.delete(id);
+      }
+    },
+    advance(ms) {
+      const target = now + ms;
+      for (;;) {
+        let due = null;
+        for (const [id, t] of timers) {
+          if (t.at <= target && (!due || t.at < due.t.at)) due = { id, ...t };
+        }
+        if (!due) break;
+        timers.delete(due.id);
+        now = due.at;
+        due.fn();
+      }
+      now = target;
+    },
+    pending() {
+      return timers.size;
+    }
+  };
 }
 
 function fixture(name) {
@@ -42,4 +81,4 @@ function successFrom(name) {
   return { status: "success", entry: fixture(name)[0] };
 }
 
-module.exports = { CID, key, createHarness, fixture, successFrom };
+module.exports = { CID, key, createHarness, fakeClock, fixture, successFrom };
