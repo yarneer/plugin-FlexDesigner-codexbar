@@ -1,0 +1,56 @@
+{
+  "name": "plugin-flexdesigner-codexbar",
+  "version": "0.1.0",
+  "description": "FlexDesigner plugin showing CodexBar-reported remaining quota for any provider on a Flexbar",
+  "license": "MIT",
+  "author": "xli",
+  "homepage": "https://github.com/yarneer/plugin-FlexDesigner-codexbar#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yarneer/plugin-FlexDesigner-codexbar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yarneer/plugin-FlexDesigner-codexbar/issues"
+  },
+  "keywords": [
+    "flexdesigner",
+    "flexbar",
+    "codexbar",
+    "usage",
+    "rate-limit",
+    "plugin"
+  ],
+  "type": "commonjs",
+  "scripts": {
+    "build": "rollup -c",
+    "postinstall": "node scripts/patch-flexcli.mjs",
+    "test": "node --test \"test/*.test.js\"",
+    "dev": "npm-run-all plugin:unlink plugin:link -p plugin:watch plugin:debug",
+    "plugin:watch": "rollup -c -w --watch.onEnd=\"npm run plugin:restart\"",
+    "plugin:unlink": "flexcli plugin unlink --uuid com.xli.codexbar --silent",
+    "plugin:link": "flexcli plugin link --path com.xli.codexbar.plugin --uuid com.xli.codexbar --start false",
+    "plugin:restart": "flexcli plugin restart --uuid=com.xli.codexbar",
+    "plugin:debug": "flexcli plugin debug --uuid=com.xli.codexbar",
+    "plugin:validate": "flexcli plugin validate --path com.xli.codexbar.plugin",
+    "plugin:pack": "flexcli plugin pack --path com.xli.codexbar.plugin",
+    "plugin:install": "flexcli plugin install --path ./com.xli.codexbar.flexplugin --force"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.2",
+    "@rollup/plugin-terser": "^1.0.0",
+    "glob": "^10.3.10",
+    "npm-run-all": "^4.1.5",
+    "rollup": "^4.0.2",
+    "rollup-plugin-copy": "^3.5.0"
+  },
+  "dependencies": {
+    "@eniac/flexcli": "^1.0.7",
+    "@eniac/flexdesigner": "^1.0.7",
+    "@napi-rs/canvas": "^0.1.52"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

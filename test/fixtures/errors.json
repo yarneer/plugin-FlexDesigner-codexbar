@@ -1,0 +1,29 @@
+{
+  "disabled": [
+    {
+      "provider": "openai",
+      "error": { "message": "No available fetch strategy for openai.", "kind": "provider", "code": 1 },
+      "source": "auto"
+    }
+  ],
+  "network": [
+    {
+      "source": "auto",
+      "error": { "message": "Network error: A TLS error caused the secure connection to fail.", "kind": "provider", "code": 1 },
+      "provider": "codex"
+    }
+  ],
+  "noSession": [
+    {
+      "provider": "devin",
+      "source": "auto",
+      "error": {
+        "kind": "provider",
+        "code": 1,
+        "message": "No Devin session found. Sign in to app.devin.ai in a supported Chromium browser on macOS, then open Usage & Limits. Manual auth: Settings → Providers → Devin → Auth source → Manual (app), or cookieSource=manual in your CLI config (default ~/.config/codexbar/config.json)."
+      }
+    }
+  ],
+  "empty": [],
+  "garbage": "not json at all {{{"
+}

@@ -1,0 +1,5 @@
+node_modules/
+com.xli.codexbar.plugin/backend/
+com.xli.codexbar.plugin/resources/*.png
+*.flexplugin
+.DS_Store

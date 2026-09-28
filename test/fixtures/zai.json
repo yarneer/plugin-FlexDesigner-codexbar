@@ -1,0 +1,39 @@
+[
+  {
+    "source": "api",
+    "provider": "zai",
+    "usage": {
+      "identity": { "providerID": "zai", "loginMethod": "max" },
+      "loginMethod": "max",
+      "updatedAt": "2026-09-28T10:16:20Z",
+      "primary": {
+        "resetDescription": "5-hour",
+        "usedPercent": 10,
+        "resetsAt": "2026-09-28T12:55:01Z",
+        "windowMinutes": 300
+      },
+      "secondary": {
+        "resetDescription": "1 week window",
+        "usedPercent": 9,
+        "resetsAt": "2026-10-02T07:03:36Z",
+        "windowMinutes": 10080
+      },
+      "tertiary": null,
+      "details": [
+        {
+          "title": "Quota details",
+          "rows": [
+            { "label": "Token quota", "value": "9% used" },
+            { "label": "Account balance", "value": "¥0.00", "secondaryValue": "[redacted]" }
+          ]
+        }
+      ],
+      "extraRateWindows": []
+    },
+    "rateWindowLabels": { "secondary": "Weekly", "primary": "5-hour" },
+    "pace": {
+      "primary": { "stage": "farBehind", "willLastToReset": true, "deltaPercent": -40, "expectedUsedPercent": 50 },
+      "secondary": { "stage": "farBehind", "willLastToReset": true, "deltaPercent": -38, "expectedUsedPercent": 47 }
+    }
+  }
+]

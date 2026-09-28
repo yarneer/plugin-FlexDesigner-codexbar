@@ -1,0 +1,27 @@
+[
+  {
+    "source": "claude",
+    "provider": "claude",
+    "usage": {
+      "identity": { "providerID": "claude" },
+      "dataConfidence": "percentOnly",
+      "updatedAt": "2026-09-28T08:40:08Z",
+      "primary": {
+        "usedPercent": 0,
+        "windowMinutes": 300
+      },
+      "secondary": {
+        "resetsAt": "2026-10-02T02:59:00Z",
+        "resetDescription": "resets Oct 1 at 10:59pm (America/New_York)",
+        "windowMinutes": 10080,
+        "usedPercent": 17
+      },
+      "tertiary": null
+    },
+    "rateWindowLabels": { "secondary": "Weekly", "primary": "Session" },
+    "pace": {
+      "primary": { "stage": "farBehind", "willLastToReset": true, "deltaPercent": 0, "expectedUsedPercent": 0 },
+      "secondary": { "stage": "farBehind", "willLastToReset": true, "deltaPercent": -17, "expectedUsedPercent": 34 }
+    }
+  }
+]

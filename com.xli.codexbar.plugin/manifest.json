@@ -1,0 +1,90 @@
+{
+  "name": "CodexBar Usage",
+  "uuid": "com.xli.codexbar",
+  "version": "0.1.0",
+  "author": "xli",
+  "entry": "backend/plugin.cjs",
+  "description": "Show CodexBar-reported remaining quota for any provider on your Flexbar",
+  "repo": "https://github.com/yarneer/plugin-FlexDesigner-codexbar",
+  "sdk": {
+    "version": "1.0.0"
+  },
+  "software": {
+    "minimumVersion": "2.0.1"
+  },
+  "os": [
+    {
+      "platform": "mac",
+      "minimumVersion": "10.15"
+    }
+  ],
+  "device": [
+    {
+      "name": "flexbar",
+      "version": "1.0.0"
+    }
+  ],
+  "configPage": "configPage",
+  "keyLibrary": {
+    "title": "$PluginName",
+    "style": {
+      "icon": "mdi mdi-gauge"
+    },
+    "children": [
+      {
+        "title": "$Usage.Title",
+        "tip": "$Usage.Tip",
+        "cid": "com.xli.codexbar.usage",
+        "config": {
+          "keyType": "default",
+          "clickable": true,
+          "platform": [
+            "mac"
+          ]
+        },
+        "style": {
+          "icon": "mdi mdi-chart-donut",
+          "width": 240
+        },
+        "data": {
+          "provider": "codex",
+          "account": ""
+        }
+      }
+    ]
+  },
+  "local": {
+    "en": {
+      "PluginName": "CodexBar Usage",
+      "Usage": {
+        "Title": "Usage Key",
+        "Tip": "Remaining quota for one CodexBar provider. Click to refresh."
+      },
+      "Config": {
+        "Interval": "Refresh interval (seconds)",
+        "IntervalHint": "Applies to every provider immediately. 120 by default.",
+        "Path": "codexbar path (optional)",
+        "PathHint": "Leave empty to auto-detect (Homebrew paths, then PATH).",
+        "Provider": "Provider",
+        "ProviderHint": "Any provider id accepted by `codexbar usage --provider`.",
+        "Note": "All data comes from the local CodexBar CLI. The plugin never talks to providers itself."
+      }
+    },
+    "zh": {
+      "PluginName": "CodexBar 用量",
+      "Usage": {
+        "Title": "用量按键",
+        "Tip": "显示一家 CodexBar 服务商的剩余配额，点击立即刷新。"
+      },
+      "Config": {
+        "Interval": "刷新间隔（秒）",
+        "IntervalHint": "保存后立即对所有服务商生效，默认 120。",
+        "Path": "codexbar 路径（可选）",
+        "PathHint": "留空则自动查找（Homebrew 路径，然后 PATH）。",
+        "Provider": "服务商",
+        "ProviderHint": "codexbar usage --provider 支持的任意 id。",
+        "Note": "所有数据来自本机 CodexBar CLI，插件自身不访问任何服务商。"
+      }
+    }
+  }
+}
