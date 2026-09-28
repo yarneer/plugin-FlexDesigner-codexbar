@@ -21,10 +21,10 @@ Provider 限流的一个时间窗口（如 5 小时窗口、周窗口），有�
 _Avoid_: limit、period
 
 **Primary Window（主窗口）**:
-CodexBar 标为 primary 的 Window，在 Usage Key 上以大号数字显示；不一定是最短的窗口（如 Kimi 的主窗口是 7 天）。
+CodexBar 标为 primary 的 Window，是数据层的默认首条窗口；不一定是最短的窗口（如 Kimi 的主窗口是 7 天）。展示层例外：亚日窗口优先排首条（ADR 0002）。
 
 **Secondary Window（次窗口）**:
-CodexBar 标为 secondary 的 Window，在 Usage Key 上以进度条显示。
+CodexBar 标为 secondary 的 Window，默认作第二条；当它是亚日窗口且短于主窗口时提到首条（ADR 0002，如 Kimi 的 5 小时次窗口）。
 
 **Remaining（剩余）**:
 Window 中尚未使用的百分比；Usage Key 始终显示剩余而非已用。
@@ -41,4 +41,4 @@ Window 中尚未使用的百分比；Usage Key 始终显示剩余而非已用。
 ## Flagged ambiguities
 
 - 「额度」曾同时指 Window 的剩余比例和付费 credits / 账户余额——前者叫 **Remaining**，后者不在当前模型内。
-- 「主窗口 = 最短窗口」是早期错误假设；以 CodexBar 的 primary 标记为准。
+- 「主窗口 = 最短窗口」是早期错误假设，曾改为「以 CodexBar 的 primary 标记为准」；2026-09-28 起再改为「亚日窗口优先主显」（ADR 0002）——四家主力 Provider 统一为 5 小时主显 + 周用量进度条。
