@@ -33,7 +33,8 @@
     "plugin:debug": "flexcli plugin debug --uuid=com.xli.codexbar",
     "plugin:validate": "flexcli plugin validate --path com.xli.codexbar.plugin",
     "plugin:pack": "flexcli plugin pack --path com.xli.codexbar.plugin",
-    "plugin:install": "flexcli plugin install --path ./com.xli.codexbar.flexplugin --force"
+    "plugin:install": "flexcli plugin install --path ./com.xli.codexbar.flexplugin --force",
+    "render:samples": "node scripts/render-samples.mjs"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.0",
