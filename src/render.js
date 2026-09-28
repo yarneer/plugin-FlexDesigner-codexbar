@@ -85,10 +85,8 @@ function drawLogo(ctx, provider, x, y) {
 }
 
 /**
- * @param {{kind:"usage", provider:string, mainRemaining:number|null,
- *          mainWindowName:string, cornerText:string,
- *          secondary:{label:string, remaining:number|null}|null,
- *          colorRole:string|null, stale:boolean}|{kind:"error", provider:string, reason:{message:string}}} view
+ * @param {{kind:"usage", provider:string, cornerText:string, stale:boolean,
+ *          rows:[{label:string, remaining:number|null, colorRole:string|null}]}|{kind:"error", provider:string, reason:{message:string}}} view
  * @param {{width?:number}} [opts]
  * @returns {string} PNG data URL
  */
@@ -96,6 +94,11 @@ function renderKeyView(view, opts = {}) {
   return view.kind === "error" ? renderError(view, opts) : renderUsage(view, opts);
 }
 
+/**
+ * Two-bar layout: header (logo + provider + reset countdown), then one bar
+ * row per window stacked below — e.g. 5-hour on top, weekly beneath. Each row
+ * shows its own digits next to its bar, so colour never carries meaning alone.
+ */
 function renderUsage(view, opts) {
   const width = opts.width || DEFAULT_WIDTH;
   const { canvas, ctx } = newCanvas(width);
@@ -123,58 +126,37 @@ function renderUsage(view, opts) {
     ctx.fillText("·stale", width - pad, pad);
   }
 
-  // Hero number — status colour plus the digits, never colour alone.
-  ctx.textAlign = "left";
+  // Bar rows. A single window centres vertically; two stack with the first
+  // (hero, e.g. 5-hour) on top.
+  const rows = (view.rows || []).slice(0, 2);
+  const rowH = 17;
+  const firstY = rows.length === 2 ? 24 : 30;
+  const barX = 36;
+  const pctRight = width - pad;
+  const barRight = pctRight - 44;
+
   ctx.textBaseline = "alphabetic";
-  ctx.font = "700 26px sans-serif";
-  ctx.fillStyle = (view.colorRole && STATUS[view.colorRole]) || INK.primary;
-  const hero = heroText(view.mainRemaining);
-  ctx.fillText(hero, pad, 43);
-  const heroWidth = ctx.measureText(hero).width;
+  rows.forEach((row, i) => {
+    const top = firstY + i * rowH;
+    const color = (row.colorRole && STATUS[row.colorRole]) || INK.secondary;
 
-  if (view.mainWindowName) {
-    ctx.font = "400 10px sans-serif";
-    ctx.fillStyle = INK.secondary;
-    ctx.fillText(view.mainWindowName, pad + heroWidth + 6, 43);
-  }
-
-  // Secondary window as a labelled meter on the right half.
-  if (view.secondary) {
-    const mx = Math.round(width * 0.52);
-    const mw = width - mx - pad;
-    const y = 34;
     ctx.font = "400 9px sans-serif";
     ctx.fillStyle = INK.muted;
     ctx.textAlign = "left";
-    ctx.fillText(view.secondary.label, mx, y);
+    ctx.fillText(row.label, pad, top + 8);
 
+    meter(ctx, barX, top + 3, barRight - barX, 6, row.remaining || 0, color);
+
+    ctx.font = "700 13px sans-serif";
     ctx.textAlign = "right";
-    ctx.fillStyle = INK.secondary;
-    ctx.fillText(
-      Number.isFinite(view.secondary.remaining)
-        ? `${Math.round(view.secondary.remaining)}%`
-        : "—%",
-      mx + mw,
-      y
-    );
-
-    const role =
-      view.secondary.remaining === null ? null : statusFor(view.secondary.remaining);
-    meter(
-      ctx,
-      mx,
-      y + 3,
-      mw,
-      3,
-      view.secondary.remaining || 0,
-      (role && STATUS[role]) || INK.secondary
-    );
-  }
+    ctx.fillStyle = (row.colorRole && STATUS[row.colorRole]) || INK.secondary;
+    ctx.fillText(pctText(row.remaining), pctRight, top + 10);
+  });
 
   return canvas.toDataURL("image/png");
 }
 
-function heroText(remaining) {
+function pctText(remaining) {
   return Number.isFinite(remaining) ? `${Math.round(remaining)}%` : "—%";
 }
 

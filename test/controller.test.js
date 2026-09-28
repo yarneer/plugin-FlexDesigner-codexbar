@@ -24,7 +24,8 @@ test("alive queries the key's provider and draws primary Remaining", async () =>
   assert.equal(view.kind, "usage");
   assert.equal(view.provider, "codex");
   // fixture: primary usedPercent 42.5 → remaining 57.5
-  assert.equal(view.mainRemaining, 57.5);
+  assert.equal(view.rows[0].remaining, 57.5);
+  assert.equal(view.rows[0].label, "5h");
 });
 
 test("alive defaults to codex when key data has no provider", async () => {
@@ -57,7 +58,7 @@ test("two keys on one provider share a single query and both get drawn", async (
 
   assert.deepEqual(h.calls, ["codex"]);
   assert.deepEqual(h.draws.map((d) => d.uid).sort(), ["k1", "k2"]);
-  assert.equal(h.draws[0].view.mainRemaining, h.draws[1].view.mainRemaining);
+  assert.deepEqual(h.draws[0].view.rows, h.draws[1].view.rows);
 });
 
 test("a click while a query is in flight merges into that query", async () => {
@@ -129,15 +130,17 @@ test("account emails and ids never reach a KeyView or a log", async () => {
   assert.ok(!dump.includes("user_XXXX"));
 });
 
-test("cursor (real output): Total hero, Cursor meter, tertiary dropped", async () => {
+test("cursor (real output): Total and Cursor bars, tertiary dropped", async () => {
   const h = createHarness(() => successFrom("cursor"));
   h.controller.onAlive({ keys: [key("k1", "cursor")] });
   await new Promise(setImmediate);
 
   const view = h.draws[0].view;
-  assert.equal(view.mainWindowName, "Total");
-  assert.equal(view.secondary.label, "Cursor");
-  assert.ok(Math.abs(view.secondary.remaining - 93.3755555555556) < 1e-9);
+  assert.deepEqual(
+    view.rows.map((r) => r.label),
+    ["Total", "Cursor"]
+  );
+  assert.ok(Math.abs(view.rows[1].remaining - 93.3755555555556) < 1e-9);
   const dump = JSON.stringify(view);
   assert.ok(!dump.includes("Third Party"), "tertiary window leaked");
   assert.ok(!dump.includes("accountEmail"));
@@ -148,10 +151,10 @@ test("kimi hero is the 5-hour window even though CodexBar marks the 7-day primar
   h.controller.onAlive({ keys: [key("k1", "kimi")] });
   await new Promise(setImmediate);
 
-  // fixture: kimi secondary = 5h usedPercent 31.6637 → hero remaining 68.3363
+  // fixture: kimi secondary = 5h usedPercent 31.6637 → hero bar remaining 68.3363
   const view = h.draws[0].view;
   assert.equal(view.kind, "usage");
-  assert.ok(Math.abs(view.mainRemaining - 68.3363) < 1e-9);
+  assert.ok(Math.abs(view.rows[0].remaining - 68.3363) < 1e-9);
 });
 
 test("missing usedPercent renders a null main value, not a fake number", async () => {
@@ -160,5 +163,5 @@ test("missing usedPercent renders a null main value, not a fake number", async (
   h.controller.onAlive({ keys: [key("k1")] });
   await new Promise(setImmediate);
 
-  assert.equal(h.draws[0].view.mainRemaining, null);
+  assert.equal(h.draws[0].view.rows[0].remaining, null);
 });

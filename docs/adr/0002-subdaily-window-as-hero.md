@@ -20,3 +20,7 @@
 - Snapshot 数据层不变：仍是 CodexBar 的 primary/secondary 原样，只是展示层重排，KeyView 不区分「CodexBar primary」与「显示主窗口」。
 - CONTEXT.md 的 Primary Window 词条改为「数据层主窗口」语义，并注明展示层规则见本 ADR；story 24（Kimi 主显 CodexBar primary）作废。
 - 测试：kimi 断言改为 5h 主显；新增 zai（不触发交换）与 cursor（等长不交换）边界用例。
+
+## 附记（2026-09-28 同日）
+
+展示形式再迭代：卡片不再用「大号数字 + 单条进度条」，改为**双条堆叠**——第一条（亚日/主窗口）在上、第二条在下，每条自带短标签（`5h`/`7d`，由窗口时长推导；两窗等长时回退 CodexBar 自带标签如 Total/Cursor 以示区分）、进度条与百分比（各自按四档着色）。倒计时角标跟随第一条窗口。单窗口 Provider 只画一条。

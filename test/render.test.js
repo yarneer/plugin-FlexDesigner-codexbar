@@ -14,12 +14,31 @@ function assertPng(dataUrl) {
   assert.equal(bytes[1], 0x50);
 }
 
-test("usage view renders a non-empty PNG", () => {
-  assertPng(renderKeyView({ kind: "usage", provider: "codex", mainRemaining: 57.5 }));
+test("two-bar usage view renders a non-empty PNG", () => {
+  assertPng(
+    renderKeyView({
+      kind: "usage",
+      provider: "codex",
+      cornerText: "2h13m",
+      stale: false,
+      rows: [
+        { label: "5h", remaining: 57.5, colorRole: "good" },
+        { label: "7d", remaining: 83, colorRole: "good" }
+      ]
+    })
+  );
 });
 
 test("usage view with null remaining still renders", () => {
-  assertPng(renderKeyView({ kind: "usage", provider: "codex", mainRemaining: null }));
+  assertPng(
+    renderKeyView({
+      kind: "usage",
+      provider: "codex",
+      cornerText: "",
+      stale: false,
+      rows: [{ label: "5h", remaining: null, colorRole: null }]
+    })
+  );
 });
 
 test("error view renders a non-empty PNG", () => {
@@ -33,5 +52,16 @@ test("error view renders a non-empty PNG", () => {
 });
 
 test("non-default width renders", () => {
-  assertPng(renderKeyView({ kind: "usage", provider: "claude", mainRemaining: 0 }, { width: 180 }));
+  assertPng(
+    renderKeyView(
+      {
+        kind: "usage",
+        provider: "claude",
+        cornerText: "45m",
+        stale: false,
+        rows: [{ label: "5h", remaining: 0, colorRole: "critical" }]
+      },
+      { width: 180 }
+    )
+  );
 });

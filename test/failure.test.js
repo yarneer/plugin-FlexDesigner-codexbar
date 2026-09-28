@@ -33,7 +33,7 @@ test("refresh failure with an old snapshot keeps the numbers and flags stale", a
   assert.equal(h.draws.length, 2);
   const stale = h.draws[1].view;
   assert.equal(stale.kind, "usage");
-  assert.equal(stale.mainRemaining, h.draws[0].view.mainRemaining, "old value kept");
+  assert.deepEqual(stale.rows, h.draws[0].view.rows, "old values kept");
   assert.equal(stale.stale, true);
   assert.equal(h.draws[0].view.stale, false);
 });

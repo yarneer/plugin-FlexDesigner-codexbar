@@ -1,7 +1,7 @@
 /**
- * Full-card KeyView fields (ticket #3): window names, reset countdown, colour
- * tiers, secondary meter — asserted on the controller seam, plus renderer
- * smoke coverage for the new shapes.
+ * Two-bar card KeyView fields (ticket #7 iterations): bar rows for both
+ * windows, reset countdown, colour tiers — asserted on the controller seam,
+ * plus renderer smoke coverage for the new shapes.
  */
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -38,81 +38,72 @@ test("statusFor tiers: >50 good, >20 warning, >5 serious, else critical", () => 
   assert.equal(statusFor(0), "critical");
 });
 
-test("usage KeyView carries window names, countdown corner and secondary meter", async () => {
+test("claude card: 5h bar on top, weekly bar beneath, countdown in the corner", async () => {
   const h = createHarness(() => successFrom("claude"), { now: () => NOW });
   h.controller.onAlive({ keys: [key("k1", "claude")] });
   await new Promise(setImmediate);
 
   const view = h.draws[0].view;
   assert.equal(view.kind, "usage");
-  assert.equal(view.mainWindowName, "Session"); // rateWindowLabels.primary
   assert.equal(view.cornerText, "2h13m"); // primary resetsAt 13:40Z vs NOW
-  assert.equal(view.colorRole, "good"); // primary used 8% → 92 left
-  assert.deepEqual(view.secondary, { label: "Weekly", remaining: 82 });
+  assert.equal(view.rows.length, 2);
+  assert.equal(view.rows[0].label, "5h");
+  assert.ok(Math.abs(view.rows[0].remaining - 92) < 1e-9);
+  assert.equal(view.rows[0].colorRole, "good");
+  assert.equal(view.rows[1].label, "7d");
+  assert.equal(view.rows[1].remaining, 82);
+  assert.equal(view.rows[1].colorRole, "good");
   assert.equal(view.stale, false);
 });
 
-test("window not started (no resetsAt, Claude at 0%) shows the window name in the corner", async () => {
+test("window not started (no resetsAt, Claude at 0%): corner shows the hero name", async () => {
   const h = createHarness(() => successFrom("claude-unused"), { now: () => NOW });
   h.controller.onAlive({ keys: [key("k1", "claude")] });
   await new Promise(setImmediate);
 
   const view = h.draws[0].view;
-  assert.equal(view.mainRemaining, 100);
-  assert.equal(view.cornerText, "Session");
+  assert.equal(view.rows[0].remaining, 100);
+  assert.equal(view.cornerText, "5h");
 });
 
-test("kimi: hero is the 5-hour window, meter is the 7-day weekly window (ADR 0002)", async () => {
+test("kimi: 5-hour bar on top, 7-day weekly bar beneath (ADR 0002)", async () => {
   const h = createHarness(() => successFrom("kimi"), { now: () => NOW });
   h.controller.onAlive({ keys: [key("k1", "kimi")] });
   await new Promise(setImmediate);
 
   const view = h.draws[0].view;
-  assert.equal(view.mainWindowName, "5-hour usage");
-  assert.ok(Math.abs(view.mainRemaining - 68.3363) < 1e-9);
-  assert.deepEqual(view.secondary, { label: "7-day usage", remaining: 89.7076 });
+  assert.equal(view.rows[0].label, "5h");
+  assert.ok(Math.abs(view.rows[0].remaining - 68.3363) < 1e-9);
+  assert.equal(view.rows[1].label, "7d");
+  assert.ok(Math.abs(view.rows[1].remaining - 89.7076) < 1e-9);
 });
 
-test("hero swap only fires for a sub-daily secondary: zai keeps CodexBar primary", async () => {
+test("zai keeps CodexBar primary order: 5-hour first, weekly second", async () => {
   const h = createHarness(() => successFrom("zai"), { now: () => NOW });
   h.controller.onAlive({ keys: [key("k1", "zai")] });
   await new Promise(setImmediate);
 
-  // zai: primary = 5-hour (300min), secondary = Weekly (10080min) — no swap.
   const view = h.draws[0].view;
-  assert.equal(view.mainWindowName, "5-hour");
-  assert.equal(view.secondary.label, "Weekly");
+  assert.equal(view.rows[0].label, "5h");
+  assert.equal(view.rows[0].remaining, 90);
+  assert.equal(view.rows[1].label, "7d");
+  assert.equal(view.rows[1].remaining, 91);
 });
 
-test("cursor (equal 30d windows) keeps CodexBar primary as hero", async () => {
+test("cursor (equal 30d windows): CodexBar's own labels keep the bars apart", async () => {
   const h = createHarness(() => successFrom("cursor"), { now: () => NOW });
   h.controller.onAlive({ keys: [key("k1", "cursor")] });
   await new Promise(setImmediate);
 
   const view = h.draws[0].view;
-  assert.equal(view.mainWindowName, "Total");
-  assert.equal(view.secondary.label, "Cursor");
+  assert.deepEqual(
+    view.rows.map((r) => r.label),
+    ["Total", "Cursor"]
+  );
+  assert.ok(Math.abs(view.rows[0].remaining - 93.6910) < 1e-3);
 });
 
-test("missing rateWindowLabels fall back to windowMinutes-derived names", async () => {
-  const entry = {
-    provider: "codex",
-    usage: {
-      primary: { usedPercent: 60, windowMinutes: 300, resetsAt: "2026-09-28T12:27:00Z" },
-      secondary: { usedPercent: 30, windowMinutes: 10080 }
-    }
-  };
-  const h = createHarness(() => ({ status: "success", entry }), { now: () => NOW });
-  h.controller.onAlive({ keys: [key("k1")] });
-  await new Promise(setImmediate);
-
-  const view = h.draws[0].view;
-  assert.equal(view.mainWindowName, "5h");
-  assert.equal(view.cornerText, "1h0m");
-  assert.deepEqual(view.secondary, { label: "7d", remaining: 70 });
-});
-
-test("provider with a single window renders with secondary null", async () => {
+test("single-window provider renders one row", async () => {
   const entry = {
     provider: "cursor",
     usage: { primary: { usedPercent: 6, windowMinutes: 43200, resetsAt: "2026-10-26T00:00:00Z" } }
@@ -122,25 +113,27 @@ test("provider with a single window renders with secondary null", async () => {
   await new Promise(setImmediate);
 
   const view = h.draws[0].view;
-  assert.equal(view.secondary, null);
-  assert.equal(view.colorRole, "good"); // 100-6 = 94 remaining
+  assert.equal(view.rows.length, 1);
+  assert.equal(view.rows[0].label, "30d");
+  assert.equal(view.rows[0].remaining, 94);
+  assert.equal(view.rows[0].colorRole, "good");
 });
 
-test("colour role follows the remaining tier", async () => {
-  const make = async (used) => {
-    const entry = {
-      provider: "codex",
-      usage: { primary: { usedPercent: used, windowMinutes: 300 } }
-    };
-    const h = createHarness(() => ({ status: "success", entry }), { now: () => NOW });
-    h.controller.onAlive({ keys: [key("k1")] });
-    await new Promise(setImmediate);
-    return h.draws[0].view;
+test("each bar carries its own colour tier", async () => {
+  const entry = {
+    provider: "codex",
+    usage: {
+      primary: { usedPercent: 75, windowMinutes: 300 }, // 25 left → warning
+      secondary: { usedPercent: 97, windowMinutes: 10080 } // 3 left → critical
+    }
   };
-  assert.equal((await make(10)).colorRole, "good");
-  assert.equal((await make(75)).colorRole, "warning");
-  assert.equal((await make(93)).colorRole, "serious");
-  assert.equal((await make(99)).colorRole, "critical");
+  const h = createHarness(() => ({ status: "success", entry }), { now: () => NOW });
+  h.controller.onAlive({ keys: [key("k1")] });
+  await new Promise(setImmediate);
+
+  const [five, weekly] = h.draws[0].view.rows;
+  assert.equal(five.colorRole, "warning");
+  assert.equal(weekly.colorRole, "critical");
 });
 
 function assertPng(dataUrl) {
@@ -149,20 +142,38 @@ function assertPng(dataUrl) {
   assert.ok(bytes.length > 500);
 }
 
-test("renderer smoke: full card variants all produce PNGs", () => {
+test("renderer smoke: two-bar variants all produce PNGs", () => {
   const base = {
     kind: "usage",
     provider: "codex",
-    mainWindowName: "Session",
     cornerText: "2h13m",
-    secondary: { label: "Weekly", remaining: 82 },
     stale: false
   };
-  assertPng(renderKeyView({ ...base, mainRemaining: 92, colorRole: "good" }));
-  assertPng(renderKeyView({ ...base, mainRemaining: 0, colorRole: "critical" }));
-  assertPng(renderKeyView({ ...base, mainRemaining: 100, colorRole: "good", secondary: null }));
-  assertPng(renderKeyView({ ...base, mainRemaining: null, colorRole: null, secondary: null }));
-  assertPng(renderKeyView({ ...base, mainRemaining: 92, colorRole: "good", stale: true }));
+  const two = [
+    { label: "5h", remaining: 92, colorRole: "good" },
+    { label: "7d", remaining: 82, colorRole: "good" }
+  ];
+  assertPng(renderKeyView({ ...base, rows: two }));
+  assertPng(
+    renderKeyView({
+      ...base,
+      rows: [
+        { label: "5h", remaining: 0, colorRole: "critical" },
+        { label: "7d", remaining: 100, colorRole: "good" }
+      ]
+    })
+  );
+  assertPng(renderKeyView({ ...base, rows: [{ label: "30d", remaining: 94, colorRole: "good" }] }));
+  assertPng(
+    renderKeyView({
+      ...base,
+      rows: [
+        { label: "5h", remaining: null, colorRole: null },
+        { label: "7d", remaining: null, colorRole: null }
+      ]
+    })
+  );
+  assertPng(renderKeyView({ ...base, rows: two, stale: true }));
   assertPng(
     renderKeyView(
       { kind: "error", provider: "kimi", reason: { kind: "not-enabled", message: "kimi 未在 CodexBar 中启用" } },

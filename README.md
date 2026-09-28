@@ -7,9 +7,8 @@
 插件只有一种按键 **Usage Key**：在按键设置里选一个 Provider（codex / claude / cursor / gemini / copilot / zai / kimi 排在前面，其余 CodexBar 支持的 id 均可选），按键持续显示：
 
 - 品牌 logo：codex / claude / gemini / copilot / cursor / zai / kimi / qwen / deepseek 显示各自 logo（无 logo 的 Provider 回退文字标签）
-- 大号数字：主显窗口的剩余百分比（颜色四档：>50 绿、>20 黄、>5 橙、其余红；数字永远显示）。claude / codex / GLM / kimi 统一为 **5 小时窗口主显**；其他 Provider 以 CodexBar 的 primary 窗口主显（ADR 0002）
-- 右上角：主显窗口重置倒计时（`2h13m` / `3d4h` / `45m`）；窗口未开始时显示窗口名
-- 进度条：另一窗口的剩余量（标签取 CodexBar 的 `rateWindowLabels`）
+- **双进度条**：上面一条 5 小时窗口、下面一条周窗口，各带短标签（`5h` / `7d`）、进度条和剩余百分比（各自按四档着色：>50 绿、>20 黄、>5 橙、其余红；数字永远显示）。claude / codex / GLM / kimi 布局一致；其他 Provider 以 CodexBar 的 primary 窗口排首条，单窗口只画一条（ADR 0002）
+- 右上角：首条窗口的重置倒计时（`2h13m` / `3d4h` / `45m`）；窗口未开始时显示窗口名
 - 刷新失败时保留上一份数字并标 `·stale`；从未成功则显示错误卡说明原因
 - 点击按键立即刷新
 

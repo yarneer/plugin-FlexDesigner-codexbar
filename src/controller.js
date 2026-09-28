@@ -8,8 +8,8 @@
  * CodexBar or a canvas.
  *
  * KeyView contract (controller → renderer):
- *   usage: {kind:"usage", provider, mainRemaining, mainWindowName, cornerText,
- *           secondary:{label, remaining}|null, colorRole, stale}
+ *   usage: {kind:"usage", provider, rows:[{label, remaining, colorRole} ×1-2],
+ *           cornerText, stale}
  *   error: {kind:"error", provider, reason:{kind, message}}
  */
 const { normaliseSnapshot } = require("./snapshot");
@@ -225,44 +225,54 @@ function createController(deps = {}) {
 module.exports = { createController, buildKeyView };
 
 /**
- * Snapshot → usage KeyView (pure). Display rule (ADR 0002): when the two
- * windows include a sub-daily one, that window is the hero and the other is
- * the meter — so claude/codex/GLM/kimi all show "5-hour hero + weekly meter"
- * consistently, even where CodexBar marks the weekly window primary (Kimi).
- * Otherwise the hero is CodexBar's primary window. The corner shows the hero
- * window's reset countdown, falling back to its name when it has not started.
- * Exported so tooling (sample renders) produces exactly what the controller
- * produces.
+ * Snapshot → usage KeyView (pure). Display rule (ADR 0002): windows render as
+ * up to two stacked bars, top first. When the two windows include a sub-daily
+ * one it goes on top — so claude/codex/GLM/kimi all show "5h bar above weekly
+ * bar" even where CodexBar marks the weekly window primary (Kimi); otherwise
+ * CodexBar's primary is first. The corner shows the first window's reset
+ * countdown, falling back to its name when it has not started. Exported so
+ * tooling (sample renders) produces exactly what the controller produces.
  */
 function buildKeyView(provider, snapshot, { stale = false, now = Date.now() } = {}) {
   const windows = pickWindows(snapshot);
   const hero = windows.hero;
-  const mainWindowName = windows.heroLabel || windowNameFromMinutes(hero.windowMinutes);
-  const cornerText = hero.resetsAt ? formatCountdown(hero.resetsAt, now) : mainWindowName;
+  const heroName = windowNameFromMinutes(hero.windowMinutes);
+  const cornerText = hero.resetsAt ? formatCountdown(hero.resetsAt, now) : heroName;
+
+  // Bar labels: uniform short names derived from window length ("5h"/"7d");
+  // when both windows derive the same name (Cursor's equal 30-day windows),
+  // fall back to CodexBar's own labels so the bars stay distinguishable.
+  const meterName = windows.meter ? windowNameFromMinutes(windows.meter.windowMinutes) : null;
+  const clash = windows.meter && heroName && heroName === meterName;
+  const rows = [
+    barRow(clash ? windows.heroLabel || "1st" : heroName, hero),
+    windows.meter
+      ? barRow(clash ? windows.meterLabel || "2nd" : meterName, windows.meter)
+      : null
+  ].filter(Boolean);
+
   return {
     kind: "usage",
     provider,
-    mainRemaining: hero.remaining,
-    mainWindowName,
+    rows,
     cornerText,
-    secondary: windows.meter
-      ? {
-          label:
-            windows.meterLabel ||
-            windowNameFromMinutes(windows.meter.windowMinutes) ||
-            "2nd",
-          remaining: windows.meter.remaining
-        }
-      : null,
-    colorRole: hero.remaining === null ? null : statusFor(hero.remaining),
     stale: Boolean(stale)
   };
 }
 
+/** One bar row: short label + remaining + its own colour tier. */
+function barRow(label, window) {
+  return {
+    label: label || "—",
+    remaining: window.remaining,
+    colorRole: window.remaining === null ? null : statusFor(window.remaining)
+  };
+}
+
 /**
- * Chooses which window is the hero. A sub-daily (< 1440 min) CodexBar
- * secondary beats its primary (Kimi: 5h hero over the 7d primary); any other
- * shape keeps CodexBar's primary as the hero.
+ * Orders the windows for display. A sub-daily (< 1440 min) CodexBar secondary
+ * beats its primary (Kimi: 5h first over the 7d primary); any other shape
+ * keeps CodexBar's primary first.
  */
 function pickWindows(snapshot) {
   const primary = snapshot.primary;
