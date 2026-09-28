@@ -24,14 +24,20 @@ function createController(deps = {}) {
     runCli,
     draw,
     log = { info() {}, warn() {} },
-    now = () => Date.now()
+    now = () => Date.now(),
+    scheduler = { setTimeout, clearTimeout },
+    defaults = {}
   } = deps;
 
   if (typeof runCli !== "function" || typeof draw !== "function") {
     throw new Error("controller requires runCli and draw");
   }
 
-  /** provider id → {snapshot, error, inflight, keyUids:Set} */
+  const DEFAULT_INTERVAL_MS = defaults.intervalMs || 120_000;
+  let intervalMs = DEFAULT_INTERVAL_MS;
+  let codexbarPath = "";
+
+  /** provider id → {snapshot, error, inflight, timer, keyUids:Set} */
   const providers = new Map();
   /** key uid → provider id */
   const keys = new Map();
@@ -44,10 +50,31 @@ function createController(deps = {}) {
   function ensureProvider(id) {
     let state = providers.get(id);
     if (!state) {
-      state = { snapshot: null, error: null, inflight: null, keyUids: new Set() };
+      state = { snapshot: null, error: null, inflight: null, timer: null, keyUids: new Set() };
       providers.set(id, state);
     }
     return state;
+  }
+
+  /** Cancels a provider's pending poll timer (its snapshot stays cached). */
+  function stopTimer(id) {
+    const state = providers.get(id);
+    if (state && state.timer !== null) {
+      scheduler.clearTimeout(state.timer);
+      state.timer = null;
+    }
+  }
+
+  /** Schedules the next poll for a provider that still has keys on screen. */
+  function scheduleNext(id) {
+    const state = providers.get(id);
+    if (!state) return;
+    stopTimer(id);
+    if (state.keyUids.size === 0) return;
+    state.timer = scheduler.setTimeout(() => {
+      state.timer = null;
+      refresh(id);
+    }, intervalMs);
   }
 
   /** Redraws every key showing this provider with the current state. */
@@ -124,6 +151,7 @@ function createController(deps = {}) {
       } finally {
         state.inflight = null;
         emit(id);
+        scheduleNext(id);
       }
     })();
 
@@ -140,17 +168,38 @@ function createController(deps = {}) {
       const id = providerOf(key);
       keys.set(key.uid, id);
       ensureProvider(id).keyUids.add(key.uid);
+      // Show the cached snapshot immediately, then refresh in the background.
+      if (providers.get(id).snapshot) emit(id);
     }
     for (const key of payload.keys || []) {
       refresh(providerOf(key));
     }
   }
 
-  /** SDK: a key was clicked (or its config data round-tripped). */
+  /**
+   * SDK: a key was clicked (or its settings data round-tripped). A click
+   * forces an immediate refresh; if the key's provider setting changed, the
+   * key moves to the new provider first.
+   */
   function onKeyClick(payload) {
     const key = payload.key;
     if (!key || !keys.has(key.uid)) return;
-    refresh(keys.get(key.uid));
+    const previous = keys.get(key.uid);
+    const id = providerOf(key);
+
+    if (id !== previous) {
+      keys.set(key.uid, id);
+      const old = providers.get(previous);
+      if (old) {
+        old.keyUids.delete(key.uid);
+        if (old.keyUids.size === 0) stopTimer(previous);
+      }
+      ensureProvider(id).keyUids.add(key.uid);
+      const state = providers.get(id);
+      if (state.snapshot || state.error) emit(id);
+    }
+
+    refresh(id);
   }
 
   /** SDK: key(s) removed from the device. */
@@ -160,11 +209,28 @@ function createController(deps = {}) {
       if (id === undefined) continue;
       keys.delete(key.uid);
       const state = providers.get(id);
-      if (state) state.keyUids.delete(key.uid);
+      if (!state) continue;
+      state.keyUids.delete(key.uid);
+      // Last key for this provider gone — stop polling it.
+      if (state.keyUids.size === 0) stopTimer(id);
     }
   }
 
-  return { onAlive, onKeyClick, onDead };
+  /** SDK: global config saved. New interval applies to every provider now. */
+  function onConfig(payload = {}) {
+    if (Number.isFinite(payload.intervalMs) && payload.intervalMs >= 1000) {
+      intervalMs = payload.intervalMs;
+    }
+    if (typeof payload.codexbarPath === "string") {
+      codexbarPath = payload.codexbarPath;
+    }
+    for (const id of providers.keys()) {
+      if (providers.get(id).keyUids.size > 0) scheduleNext(id);
+    }
+    log.info(`[codexbar] config: interval ${intervalMs}ms, path "${codexbarPath || "auto"}"`);
+  }
+
+  return { onAlive, onKeyClick, onDead, onConfig };
 }
 
 module.exports = { createController };

@@ -9,6 +9,7 @@ const { runCodexBar } = require("./codexbar");
 const { renderKeyView } = require("./render");
 
 const CID = "com.xli.codexbar.usage";
+const DEFAULT_INTERVAL_SECONDS = 120;
 
 /** Latest global config, updated on plugin.config.updated. */
 let globalConfig = {};
@@ -59,6 +60,12 @@ plugin.on("plugin.dead", (payload) => {
 
 plugin.on("plugin.config.updated", (payload) => {
   globalConfig = (payload && payload.config) || {};
+  const seconds = Number(globalConfig.intervalSeconds);
+  controller.onConfig({
+    intervalMs:
+      Number.isFinite(seconds) && seconds >= 1 ? seconds * 1000 : DEFAULT_INTERVAL_SECONDS * 1000,
+    codexbarPath: globalConfig.codexbarPath || ""
+  });
 });
 
 plugin.start();

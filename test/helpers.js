@@ -30,6 +30,12 @@ function createHarness(responder, deps = {}) {
       info: (msg) => logs.push(`INFO ${msg}`),
       warn: (msg) => logs.push(`WARN ${msg}`)
     },
+    // Default: timers that never fire, so tests that don't care about
+    // scheduling don't leave real 120s handles keeping the process alive.
+    scheduler: {
+      setTimeout: () => 0,
+      clearTimeout: () => {}
+    },
     ...deps
   });
   return { controller, calls, draws, logs };
@@ -55,14 +61,20 @@ function fakeClock(startMs = 0) {
     advance(ms) {
       const target = now + ms;
       for (;;) {
-        let due = null;
+        let dueId = null;
+        let dueAt = Infinity;
+        let dueFn = null;
         for (const [id, t] of timers) {
-          if (t.at <= target && (!due || t.at < due.t.at)) due = { id, ...t };
+          if (t.at <= target && t.at < dueAt) {
+            dueId = id;
+            dueAt = t.at;
+            dueFn = t.fn;
+          }
         }
-        if (!due) break;
-        timers.delete(due.id);
-        now = due.at;
-        due.fn();
+        if (dueId === null) break;
+        timers.delete(dueId);
+        now = dueAt;
+        dueFn();
       }
       now = target;
     },
