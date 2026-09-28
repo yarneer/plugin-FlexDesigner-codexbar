@@ -34,10 +34,11 @@ function createController(deps = {}) {
   }
 
   const DEFAULT_INTERVAL_MS = defaults.intervalMs || 120_000;
+  const MAX_BACKOFF_MS = defaults.maxBackoffMs || 15 * 60_000;
   let intervalMs = DEFAULT_INTERVAL_MS;
   let codexbarPath = "";
 
-  /** provider id → {snapshot, error, inflight, timer, keyUids:Set} */
+  /** provider id → {snapshot, error, failures, inflight, timer, keyUids:Set} */
   const providers = new Map();
   /** key uid → provider id */
   const keys = new Map();
@@ -50,7 +51,14 @@ function createController(deps = {}) {
   function ensureProvider(id) {
     let state = providers.get(id);
     if (!state) {
-      state = { snapshot: null, error: null, inflight: null, timer: null, keyUids: new Set() };
+      state = {
+        snapshot: null,
+        error: null,
+        failures: 0,
+        inflight: null,
+        timer: null,
+        keyUids: new Set()
+      };
       providers.set(id, state);
     }
     return state;
@@ -65,16 +73,23 @@ function createController(deps = {}) {
     }
   }
 
-  /** Schedules the next poll for a provider that still has keys on screen. */
+  /**
+   * Schedules the next poll for a provider that still has keys on screen.
+   * After failures the interval backs off exponentially (×2^failures) up to
+   * 15 minutes; a success restores the configured interval.
+   */
   function scheduleNext(id) {
     const state = providers.get(id);
     if (!state) return;
     stopTimer(id);
     if (state.keyUids.size === 0) return;
+    const delay = state.failures
+      ? Math.min(intervalMs * 2 ** state.failures, MAX_BACKOFF_MS)
+      : intervalMs;
     state.timer = scheduler.setTimeout(() => {
       state.timer = null;
       refresh(id);
-    }, intervalMs);
+    }, delay);
   }
 
   /** Redraws every key showing this provider with the current state. */
@@ -82,7 +97,8 @@ function createController(deps = {}) {
     const state = providers.get(id);
     if (!state) return;
     const view = state.snapshot
-      ? buildUsageView(id, state.snapshot)
+      ? // A failed refresh keeps the last snapshot on screen, flagged stale.
+        buildUsageView(id, state.snapshot, Boolean(state.error))
       : {
           kind: "error",
           provider: id,
@@ -97,7 +113,7 @@ function createController(deps = {}) {
    * reset countdown, falling back to the window name when the window has not
    * started yet (no reset time).
    */
-  function buildUsageView(id, snapshot) {
+  function buildUsageView(id, snapshot, stale) {
     const primary = snapshot.primary;
     const mainWindowName =
       snapshot.labels.primary || windowNameFromMinutes(primary.windowMinutes);
@@ -121,7 +137,7 @@ function createController(deps = {}) {
           }
         : null,
       colorRole: primary.remaining === null ? null : statusFor(primary.remaining),
-      stale: false
+      stale: Boolean(stale)
     };
   }
 
@@ -139,14 +155,19 @@ function createController(deps = {}) {
         if (result.status === "success") {
           state.snapshot = normaliseSnapshot(result.entry);
           state.error = null;
+          state.failures = 0;
         } else {
-          state.error = result.reason;
-          log.warn(`[codexbar] ${id} refresh failed: ${result.reason.message}`);
+          state.failures += 1;
+          state.error = { ...result.reason, message: redact(result.reason.message) };
+          log.warn(
+            `[codexbar] ${id} refresh failed (${state.failures}): ${state.error.message}`
+          );
         }
       } catch (err) {
         // runCli is typed not to throw; this is a belt-and-braces guard so a
         // buggy runner can never kill the event loop.
-        state.error = { kind: "internal", message: redactMessage(err) };
+        state.failures += 1;
+        state.error = { kind: "internal", message: redact(err && err.message ? err.message : err) };
         log.warn(`[codexbar] ${id} runner threw: ${state.error.message}`);
       } finally {
         state.inflight = null;
@@ -158,8 +179,9 @@ function createController(deps = {}) {
     return state.inflight;
   }
 
-  function redactMessage(err) {
-    return String((err && err.message) || err).replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[redacted]");
+  /** Belt-and-braces: nothing email-shaped crosses into a KeyView or log. */
+  function redact(text) {
+    return String(text || "").replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[redacted]");
   }
 
   /** SDK: key(s) appeared on a device. */
@@ -199,6 +221,11 @@ function createController(deps = {}) {
       if (state.snapshot || state.error) emit(id);
     }
 
+    // A click is the user saying "try again now": cancel any backoff and
+    // pending timer, then query immediately (merged into an in-flight query).
+    const state = ensureProvider(id);
+    state.failures = 0;
+    stopTimer(id);
     refresh(id);
   }
 

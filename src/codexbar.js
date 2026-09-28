@@ -107,7 +107,14 @@ function classify(provider, err, stdout) {
     }
   }
 
-  if (Array.isArray(parsed) && parsed.length > 0) {
+  if (Array.isArray(parsed)) {
+    if (parsed.length === 0) {
+      // No entries at all: the provider is not reporting anything.
+      return {
+        status: "failed",
+        reason: { kind: "not-enabled", message: `${provider} 未在 CodexBar 中启用` }
+      };
+    }
     const entry = parsed.find((e) => e && e.provider === provider) || parsed[0];
     if (entry && entry.error) {
       const raw = redact(entry.error.message);
@@ -142,4 +149,4 @@ function classify(provider, err, stdout) {
   };
 }
 
-module.exports = { runCodexBar, locateCodexbar, redact };
+module.exports = { runCodexBar, locateCodexbar, redact, classify };
