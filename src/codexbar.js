@@ -33,32 +33,35 @@ function redact(text) {
 
 /**
  * Locates the codexbar executable: explicit override first, then Homebrew
- * paths, then PATH. Returns null when nothing is found.
+ * paths, then PATH. Returns null when nothing is found. `opts` exists only so
+ * tests can pin the search environment.
  */
-function locateCodexbar(overridePath) {
+function locateCodexbar(overridePath, opts = {}) {
   if (overridePath && typeof overridePath === "string" && overridePath.trim()) {
     return overridePath.trim();
   }
-  for (const dir of SEARCH_PATHS) {
-    const candidate = path.join(dir, "codexbar");
-    try {
-      fs.accessSync(candidate, fs.constants.X_OK);
-      return candidate;
-    } catch {
-      // keep searching
-    }
+  const searchPaths = opts.searchPaths || SEARCH_PATHS;
+  const pathEnv = opts.pathEnv !== undefined ? opts.pathEnv : process.env.PATH;
+  for (const dir of searchPaths) {
+    const found = probe(dir);
+    if (found) return found;
   }
-  for (const dir of (process.env.PATH || "").split(path.delimiter)) {
+  for (const dir of (pathEnv || "").split(path.delimiter)) {
     if (!dir) continue;
-    const candidate = path.join(dir, "codexbar");
-    try {
-      fs.accessSync(candidate, fs.constants.X_OK);
-      return candidate;
-    } catch {
-      // keep searching
-    }
+    const found = probe(dir);
+    if (found) return found;
   }
   return null;
+}
+
+function probe(dir) {
+  const candidate = path.join(dir, "codexbar");
+  try {
+    fs.accessSync(candidate, fs.constants.X_OK);
+    return candidate;
+  } catch {
+    return null;
+  }
 }
 
 /**
