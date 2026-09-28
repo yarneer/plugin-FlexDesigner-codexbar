@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin/logs/.cdda64dd924b82551aa12a9fbb241b37fc1c1654-audit.json",
+    "files": [
+        {
+            "date": 1790594878531,
+            "name": "/Users/lixin/Develop/plugin-FlexDesigner-codexbar/com.xli.codexbar.plugin/logs/2026-09-28.log",
+            "hash": "16bd62c97bd42bbb151fe82545affd4e618381560e3ebe189799e45b0d419544"
+        }
+    ],
+    "hashType": "sha256"
+}
