@@ -4,6 +4,10 @@ FlexDesigner 插件：在 Flexbar 按键上显示 CodexBar CLI 报告的 AI 服�
 
 ## Agent skills
 
+- NEVER write unit tests after you write code. 
+- Highly prefer E2E tests as the sole testing mechanism. Use them to verify complex features work. At the end of E2E tests, produce a verifiable and repeatable artifact. 
+- If you must test a system in isolation, FIRST write all the ways it could fail, THEN write the code.
+
 ### Issue tracker
 
 Issues and specs live in GitHub Issues for `yarneer/plugin-FlexDesigner-codexbar` (via `gh`). See `docs/agents/issue-tracker.md`.
